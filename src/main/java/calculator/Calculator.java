@@ -3,35 +3,87 @@ package calculator;
 import java.util.regex.Pattern;
 
 public class Calculator {
-     //문자열을 전달받아 구분자를 기준으로 분리한 수의 합을 반환
-    public int sumFromString(String inputString) {
-        if(inputString == null || inputString.isBlank()) return 0;
+    private static String DEFAULT_SEPARATOR = "[,:]";
+    private static final String CUSTOM_SEPARATOR_MARKER = "//";
 
-        int sum = 0;
-        String separator = "[,:]";
+    //파싱된 결과를 저장
+    private static class ParseResult {
+        private final String targetString;
+        private final String separator;
 
-        //커스텀 구분자인 경우 구분자, 입력문자열 재할당 
-        if(inputString.startsWith("//")) {
-            int newLineIdx = inputString.indexOf("\n");
-            separator = Pattern.quote(inputString.substring(2, newLineIdx));
-
-            inputString = inputString.substring(newLineIdx + 1);
+        public ParseResult(String targetString, String separator) {
+            this.targetString = targetString;
+            this.separator = separator;
         }
 
-        for(String s : inputString.split(separator)) {
-            try {
-                int num = Integer.parseInt(s.trim());
-                if(num < 0) throw new RuntimeException("음수값이 입력될 순 없어요!");
-
-                sum += num; 
-            } catch (Exception e) {
-                throw new RuntimeException("숫자 이외의 값이 들어있으면 안돼요!");
-            }            
+        public String getTargetString() {
+            return targetString;
         }
 
-        return sum;
+        public String getSeparator() {
+            return separator;
+        }
     }
 
+    //입력된 문자열에서 구분자, 문자열 추출 
+    private ParseResult parseInputString(String inputString) {
+        //커스텀 구분자를 사용하는 경우
+        if(inputString.startsWith(CUSTOM_SEPARATOR_MARKER)) {
+            int newLineIdx = inputString.indexOf("\n");
+        
+            String separator = Pattern.quote(inputString.substring(2, newLineIdx));
+            String targetString = inputString.substring(newLineIdx + 1);
+
+            return new ParseResult(targetString, separator);
+        }
+
+        //기본 구분자를 사용하는 경우 
+        return new ParseResult(inputString, DEFAULT_SEPARATOR);
+    }
+
+    //입력값 검증(숫자가 아닌 값이 포함된 경우, 음수가 포함된 경우), int 추출 
+    private int validateInputAndParseToInt(String token) {
+        int parsedNumber;
+
+        try {
+                parsedNumber = Integer.parseInt(token.trim());
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("숫자 이외의 값 " + token + "이 들어있습니다!");
+            }            
+
+            if(parsedNumber < 0) {
+                throw new IllegalArgumentException("음수값은 입력할 수 없습니다.");
+        } 
+
+            return parsedNumber;
+    }
+
+     //덧셈 수행
+    private int calculateSum(String targetString, String separator) {
+        int sum = 0;
+
+        for(String token: targetString.split(separator)) {
+            sum += validateInputAndParseToInt(token);
+        }
+
+        return sum; 
+    }
+
+        
+    //메인로직 
+    public int sumFromString(String inputString) {
+        
+        if(inputString == null || inputString.isBlank()) { 
+            return 0;
+        }
+
+        ParseResult result = parseInputString(inputString);
+
+        return calculateSum(result.getTargetString(), result.getSeparator());
+    }
+
+    //---------------------------------------------------------------------------
+    //정수 사칙연산 
     public int add(int n1, int n2) {
         return n1 + n2;
     }
