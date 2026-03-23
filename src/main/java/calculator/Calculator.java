@@ -3,8 +3,9 @@ package calculator;
 import java.util.regex.Pattern;
 
 public class Calculator {
-    private static String DEFAULT_SEPARATOR = "[,:]";
+    private static final String DEFAULT_SEPARATOR = "[,:]";
     private static final String CUSTOM_SEPARATOR_MARKER = "//";
+    private static final String CUSTOM_SEPARATOR_END = "\n";
 
     //파싱된 결과를 저장
     private static class ParseResult {
@@ -26,10 +27,10 @@ public class Calculator {
     }
 
     //입력된 문자열에서 구분자, 문자열 추출 
-    private ParseResult parseInputString(String inputString) {
+    private ParseResult parse(String inputString) {
         //커스텀 구분자를 사용하는 경우
         if(inputString.startsWith(CUSTOM_SEPARATOR_MARKER)) {
-            int newLineIdx = inputString.indexOf("\n");
+            int newLineIdx = inputString.indexOf(CUSTOM_SEPARATOR_END);
         
             String separator = Pattern.quote(inputString.substring(2, newLineIdx));
             String targetString = inputString.substring(newLineIdx + 1);
@@ -43,22 +44,20 @@ public class Calculator {
 
     //입력값 검증(숫자가 아닌 값이 포함된 경우, 음수가 포함된 경우), int 추출 
     private int validateInputAndParseToInt(String token) {
-        int parsedNumber;
 
         try {
-                parsedNumber = Integer.parseInt(token.trim());
+                int parsedNumber = Integer.parseInt(token.trim());
             } catch (NumberFormatException e) {
                 throw new RuntimeException("숫자 이외의 값 " + token + "이 들어있습니다!");
             }            
 
             if(parsedNumber < 0) {
                 throw new IllegalArgumentException("음수값은 입력할 수 없습니다.");
-        } 
+            } 
 
             return parsedNumber;
     }
 
-     //덧셈 수행
     private int calculateSum(String targetString, String separator) {
         int sum = 0;
 
@@ -72,12 +71,11 @@ public class Calculator {
         
     //메인로직 
     public int sumFromString(String inputString) {
-        
         if(inputString == null || inputString.isBlank()) { 
             return 0;
         }
 
-        ParseResult result = parseInputString(inputString);
+        ParseResult result = parse(inputString);
 
         return calculateSum(result.getTargetString(), result.getSeparator());
     }
